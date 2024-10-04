@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing App</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+        button {
+            margin-top: 10px;
+        }
+        #predictedDigit {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="drawingCanvas" width="280" height="280"></canvas>
+    <button id="saveButton">Predict</button>
+    <button id="resetButton">Reset Drawing</button>
+    <div id="predictedDigit"></div>
+    <script>
+        window.onload = function() {
+            const canvas = document.getElementById('drawingCanvas');
+            const context = canvas.getContext('2d');
+            let drawing = false;
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            canvas.addEventListener('mousemove', draw);
+
+            document.getElementById('saveButton').addEventListener('click', saveImage);
+            document.getElementById('resetButton').addEventListener('click', resetDrawing);
+
+            function startDrawing(event) {
+                drawing = true;
+                context.beginPath();
+                context.moveTo(event.clientX - canvas.getBoundingClientRect().left, event.clientY - canvas.getBoundingClientRect().top);
+            }
+
+            function stopDrawing() {
+                drawing = false;
+                context.closePath();
+            }
+
+            function draw(event) {
+                if (!drawing) return;
+                context.lineTo(event.clientX - canvas.getBoundingClientRect().left, event.clientY - canvas.getBoundingClientRect().top);
+                context.strokeStyle = 'black';
+                context.lineWidth = 14;
+                context.stroke();
+            }
+
+            function saveImage() {
+                const canvas = document.getElementById('drawingCanvas');
+                const dataURL = canvas.toDataURL('image/png');
+                const requestData = JSON.stringify({ imageData: dataURL });
+                console.log('Request Data:', requestData);
+                console.log('Sending image data to API');
+                fetch("/api/predict", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ imageData: dataURL })
+                })
+                .then(response => {
+                    console.log('Response received:', response);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Prediction data:', data);
+                    document.getElementById('predictedDigit').innerText = 'Predicted Digit: ' + data.predicted_digit;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to save image');
+                });
+            }
+
+
+            function resetDrawing() {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                document.getElementById('predictedDigit').innerText = '';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+api:
+  name: api
+  port: 5000
+  image: registry.gitlab.com/k8s3720123/k8s_project/api
+  tag: latest
+
+frontend:
+  name: frontend
+  port: 80
+  image: registry.gitlab.com/k8s3720123/k8s_project/static_frontend
+  tag: latest
+
+model:
+  name: model
+  port: 5001
+  version:
+    v1: v1
+    v2: v2
+  image:
+    v1: registry.gitlab.com/k8s3720123/k8s_project/model1
+    v2: registry.gitlab.com/k8s3720123/k8s_project/model2
+  tag:
+    v1: latest
+    v2: latest
+
+secrets:
+  gitlabCredentials: registry-credentials

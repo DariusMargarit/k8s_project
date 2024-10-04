@@ -1,0 +1,28 @@
+Istio install:
+download istio-version-win.zip from https://github.com/istio/istio/releases
+put the bin folder in environment path
+istioctl install --set profile=demo -y
+or
+istioctl install
+
+kubectl label namespace default istio-injection=enabled
+Install the Knative Istio controller (if you use Knative):
+https://knative.dev/docs/install/yaml-install/serving/install-serving-with-yaml/#install-a-networking-layer
+
+for linux install:
+curl -L https://istio.io/downloadIstio | sh -
+cd istio-1.14.1        -> verify the version
+export PATH=$PWD/bin:$PATH
+
+Knative install:
+https://knative.dev/docs/install/yaml-install/serving/install-serving-with-yaml/#verifying-image-signatures
+Also configure DNS: https://knative.dev/docs/install/yaml-install/serving/install-serving-with-yaml/#configure-dns
+
+Kialli & Grafana istio:
+apply prometheus, kiali and grafana from here:
+C:\Program Files\Istio\istio-1.22.0\samples\addons
+
+kubectl create secret docker-registry registry-credentials --docker-server=registry.gitlab.com --docker-username=<username> --docker-password=<pass> --docker-email=<email>
+
+helm install drawing-app manifest/
+or use ArgoCD

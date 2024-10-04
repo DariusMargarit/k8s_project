@@ -1,0 +1,58 @@
+stages:
+  - build
+
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+  IMAGE_TAG: latest
+
+build_api:
+  stage: build
+  image: docker:26.1.4
+  services:
+    - docker:26.1.4-dind
+  variables:
+    IMAGE_NAME: $CI_REGISTRY_IMAGE/api
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG API/.
+    - docker push $IMAGE_NAME:$IMAGE_TAG
+
+#build_frontend:
+#  stage: build
+#  image: docker:26.1.4
+#  services:
+#    - docker:26.1.4-dind
+#  variables:
+#    IMAGE_NAME: $CI_REGISTRY_IMAGE/static_frontend
+#  before_script:
+#    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+#  script:
+#    - docker build -t $IMAGE_NAME:$IMAGE_TAG static_frontend/.
+#    - docker push $IMAGE_NAME:$IMAGE_TAG
+
+#build_model1:
+#  stage: build
+#  image: docker:26.1.4
+#  services:
+#    - docker:26.1.4-dind
+#  variables:
+#    IMAGE_NAME: $CI_REGISTRY_IMAGE/model1
+#  before_script:
+#    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+#  script:
+#    - docker build -t $IMAGE_NAME:$IMAGE_TAG models/model1/.
+#    - docker push $IMAGE_NAME:$IMAGE_TAG
+
+#build_model2:
+#  stage: build
+#  image: docker:26.1.4
+#  services:
+#    - docker:26.1.4-dind
+#  variables:
+#    IMAGE_NAME: $CI_REGISTRY_IMAGE/model2
+#  before_script:
+#    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+#  script:
+#    - docker build -t $IMAGE_NAME:$IMAGE_TAG models/model2/.
+#    - docker push $IMAGE_NAME:$IMAGE_TAG

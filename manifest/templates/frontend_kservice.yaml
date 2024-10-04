@@ -1,0 +1,31 @@
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: {{ .Values.frontend.name }}
+  labels:
+    app: {{ .Values.frontend.name }}
+spec:
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.frontend.name }}
+        version: v1
+      annotations:
+        autoscaling.knative.dev/min-scale: "1"
+        autoscaling.knative.dev/class: "kpa.autoscaling.knative.dev"
+    spec:
+      containers:
+        - image: "{{ .Values.frontend.image }}:{{ .Values.frontend.tag }}"
+          name: {{ .Values.frontend.name }}
+          ports:
+            - containerPort: {{ .Values.frontend.port }}
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      imagePullSecrets:
+        - name: {{ .Values.secrets.gitlabCredentials }}

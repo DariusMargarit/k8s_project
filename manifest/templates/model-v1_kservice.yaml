@@ -1,0 +1,32 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: {{ .Values.model.name }}
+  namespace: default
+  labels:
+    app: {{ .Values.model.name }}
+    networking.knative.dev/visibility: cluster-local
+spec:
+  template:
+    metadata:
+      name: {{ .Values.model.name }}-{{ .Values.model.version.v1 }}
+      annotations:
+        autoscaling.knative.dev/max-scale: "5"
+        autoscaling.knative.dev/target: "2"
+        autoscaling.knative.dev/class: "kpa.autoscaling.knative.dev"
+        autoscaling.knative.dev/metric: "rps"
+    spec:
+      containers:
+        - image: "{{ .Values.model.image.v1 }}:{{ .Values.model.tag.v1 }}"
+          name: {{ .Values.model.name }}-{{ .Values.model.version.v1 }}
+          ports:
+            - containerPort: {{ .Values.model.port }}
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1024Mi"
+              cpu: "1000m"
+      imagePullSecrets:
+        - name: {{ .Values.secrets.gitlabCredentials }}

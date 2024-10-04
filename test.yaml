@@ -1,0 +1,57 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubectl-job-sa
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubectl-job-clusterrole
+rules:
+- apiGroups: [""]
+  resources: ["*"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+- apiGroups: ["apps"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+- apiGroups: ["batch"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubectl-job-clusterrolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubectl-job-clusterrole
+subjects:
+- kind: ServiceAccount
+  name: kubectl-job-sa
+  namespace: default
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kubectl-job
+spec:
+  template:
+    metadata:
+      name: kubectl-job-pod
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: kubectl-job-sa
+      containers:
+      - name: kubectl-container
+        image: bitnami/kubectl:latest
+        command: ["sh", "-c"]
+        args:
+          - |
+            kubectl get pods -n default
+            # Add more kubectl commands as needed
+      restartPolicy: Never
+  backoffLimit: 4

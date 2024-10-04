@@ -1,0 +1,50 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.api.name }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.api.name }}
+  labels:
+    app: {{ .Values.api.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.api.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.api.name }}
+        version: v1
+    spec:
+      serviceAccountName: {{ .Values.api.name }}
+      containers:
+        - image: "{{ .Values.api.image }}:{{ .Values.api.tag }}"
+          imagePullPolicy: Always
+          name: {{ .Values.api.name }}
+          ports:
+            - containerPort: {{ .Values.api.port }}
+          env:
+            - name: MODEL_SERVICE_URL
+              value: "http://{{ .Values.model.name }}:{{ .Values.model.port }}"
+      imagePullSecrets:
+        - name: {{ .Values.secrets.gitlabCredentials }}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Values.api.name }}
+  labels:
+    app: {{ .Values.api.name }}
+spec:
+  selector:
+    app: {{ .Values.api.name }}
+  ports:
+    - port: {{ .Values.api.port }}
+      name: http
+      targetPort: {{ .Values.api.port }}
+  type: NodePort

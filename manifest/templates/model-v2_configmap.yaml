@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: model-service-config
+  namespace: default
+data:
+  model-v2_kservice.yaml: |
+    apiVersion: serving.knative.dev/v1
+    kind: Service
+    metadata:
+      name: {{ .Values.model.name }}
+      namespace: default
+      labels:
+        networking.knative.dev/visibility: cluster-local
+    spec:
+      template:
+        metadata:
+          name: {{ .Values.model.name }}-{{ .Values.model.version.v2 }}
+          annotations:
+            autoscaling.knative.dev/min-scale: "1"
+            autoscaling.knative.dev/max-scale: "5"
+            autoscaling.knative.dev/target: "1"
+            autoscaling.knative.dev/class: "kpa.autoscaling.knative.dev"
+            autoscaling.knative.dev/metric: "rps"
+        spec:
+          containers:
+            - image: "{{ .Values.model.image.v2 }}:{{ .Values.model.tag.v2 }}"
+              name: {{ .Values.model.name }}-{{ .Values.model.version.v2 }}
+              ports:
+                - containerPort: {{ .Values.model.port }}
+              resources:
+                requests:
+                  memory: "1024Mi"
+                  cpu: "1000m"
+                limits:
+                  memory: "2048Mi"
+                  cpu: "3000m"
+          imagePullSecrets:
+            - name: {{ .Values.secrets.gitlabCredentials }}
+      traffic:
+        - latestRevision: true
+          percent: 10
+        - latestRevision: false
+          percent: 90
+          revisionName: {{ .Values.model.name }}-{{ .Values.model.version.v1 }}

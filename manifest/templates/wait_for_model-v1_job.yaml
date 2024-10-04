@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: check-model-v1-status
+  namespace: default
+spec:
+  activeDeadlineSeconds: 60
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      automountServiceAccountToken: true
+      serviceAccountName: model-deployer-sa
+      containers:
+        - name: check-model-v1-status
+          image: bitnami/kubectl:latest
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              kubectl wait --for=condition=Ready ksvc {{ .Values.model.name }} --timeout=50s -n default;
+              kubectl apply -f /etc/model-service/model-v2_kservice.yaml
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/model-service
+              readOnly: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: model-service-config
+      restartPolicy: Never
+  backoffLimit: 1

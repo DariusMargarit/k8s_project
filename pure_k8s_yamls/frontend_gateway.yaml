@@ -1,0 +1,33 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: {{ .Values.frontend.name }}-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: {{ .Values.frontend.port }}
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ .Values.frontend.name }}-route
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - {{ .Values.frontend.name }}-gateway
+  http:
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: {{ .Values.frontend.name }}
+        port:
+          number: {{ .Values.frontend.port }}

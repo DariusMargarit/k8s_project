@@ -1,0 +1,116 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.model.name }}
+  namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.model.name }}-{{ .Values.model.version.v1}}
+  namespace: default
+  labels:
+    app: {{ .Values.model.name }}
+    version: {{ .Values.model.version.v1}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.model.name }}
+      version: {{ .Values.model.version.v1}}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.model.name }}
+        version: {{ .Values.model.version.v1}}
+    spec:
+      serviceAccountName: {{ .Values.model.name }}
+      containers:
+        - image: "{{ .Values.model.image.v1 }}:{{ .Values.model.tag.v1 }}"
+          imagePullPolicy: Always
+          name: {{ .Values.model.name }}
+          ports:
+            - containerPort: {{ .Values.model.port }}
+      imagePullSecrets:
+        - name: {{ .Values.secrets.gitlabCredentials }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.model.name }}-{{ .Values.model.version.v2}}
+  namespace: default
+  labels:
+    app: {{ .Values.model.name }}
+    version: {{ .Values.model.version.v2}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.model.name }}
+      version: {{ .Values.model.version.v2}}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.model.name }}
+        version: {{ .Values.model.version.v2}}
+    spec:
+      serviceAccountName: {{ .Values.model.name }}
+      containers:
+        - image: "{{ .Values.model.image.v2 }}:{{ .Values.model.tag.v2 }}"
+          imagePullPolicy: Always
+          name: {{ .Values.model.name }}
+          ports:
+            - containerPort: {{ .Values.model.port }}
+      imagePullSecrets:
+        - name: {{ .Values.secrets.gitlabCredentials }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.model.name }}
+  namespace: default
+  labels:
+    app: {{ .Values.model.name }}
+spec:
+  selector:
+    app: {{ .Values.model.name }}
+  ports:
+    - name: http
+      port: {{ .Values.model.port }}
+      targetPort: {{ .Values.model.port }}
+  type: ClusterIP
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ .Values.model.name }}
+  namespace: default
+spec:
+  hosts:
+  - {{ .Values.model.name }}
+  http:
+  - route:
+    - destination:
+        host: {{ .Values.model.name }}
+        subset: {{ .Values.model.version.v1 }}
+      weight: 40
+    - destination:
+        host: {{ .Values.model.name }}
+        subset: {{ .Values.model.version.v2 }}
+      weight: 60
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: {{ .Values.model.name }}
+  namespace: default
+spec:
+  host: {{ .Values.model.name }}
+  subsets:
+  - labels:
+      version: {{ .Values.model.version.v1 }}
+    name: {{ .Values.model.version.v1 }}
+  - labels:
+      version: {{ .Values.model.version.v2 }}
+    name: {{ .Values.model.version.v2 }}

@@ -1,0 +1,82 @@
+Some commands that I used in this project:
+
+docker build -t flask-drawing-app .
+docker run -p 5000:5000 flask-drawing-app
+docker stop flask-drawing-app
+docker ps -a
+docker rm flask-drawing-app
+
+Istio install:
+download istio-version-win.zip from https://github.com/istio/istio/releases
+put the bin folder in environment path
+istioctl install --set profile=demo -y
+or
+istioctl install
+
+kubectl label namespace default istio-injection=enabled
+Install the Knative Istio controller (if you use Knative)
+
+for linux install:
+curl -L https://istio.io/downloadIstio | sh -
+cd istio-1.14.1        -> verify the version
+export PATH=$PWD/bin:$PATH
+
+Knative install:
+https://knative.dev/docs/install/yaml-install/serving/install-serving-with-yaml/#verifying-image-signatures
+
+Argocd:
+kubectl port-forward svc/argocd-server -n argocd 8081:443
+kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 --decode
+
+kubectl create secret docker-registry registry-credentials --docker-server=registry.gitlab.com --docker-username=<username> --docker-password=<pass> --docker-email=<email>
+
+Helm: (after you install helm on your PC)
+helm create manifest
+
+helm install drawing-app manifest/
+kubectl get ksvc
+
+helm uninstall drawing-app
+
+Kialli & Grafana istio:
+apply prometheus, kiali and grafana from here:
+C:\Program Files\Istio\istio-1.22.0\samples\addons
+
+kubectl port-forward svc/kiali 20001:20001 -n istio-system
+kubectl port-forward svc/grafana 20002:3000 -n istio-system
+
+kubectl config set-context --current --namespace=my-namespace
+kubectl delete namespace <namespace>
+
+DNS Resolution Check from a Pod:
+kubectl run -i --tty --rm dnsutils --image=gcr.io/kubernetes-e2e-test-images/dnsutils:1.3 --restart=Never
+or
+kubectl run -i --tty --rm debug --image=busybox --restart=Never -- sh
+nslookup api.default.svc.cluster.local
+
+kubectl label namespace default istio-injection=enabled --overwrite
+kubectl get namespace -L istio-injection
+
+Prometheus & Grafana:
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+helm install prometheus prometheus-community/prometheus --namespace monitoring
+
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+helm install grafana grafana/grafana --namespace monitoring
+
+helm show values prometheus-community/prometheus > prometheus-values.yaml
+helm upgrade prometheus prometheus-community/prometheus --namespace monitoring -f prometheus-values.yaml
+
+kubectl expose service prometheus-server --type=NodePort --target-port=9090 --name=prometheus-server-ext -n monitoring
+kubectl expose service grafana --type=NodePort --target-port=3000 --name=grafana-ext -n monitoring
+
+Grafana username: admin
+Grafana password:
+[System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String((kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-password}")))
+(in powershell)
+
+K6 (for API test):
+k6 run api_test.js

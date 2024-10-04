@@ -1,0 +1,7 @@
+Flask
+torch
+Pillow
+scikit-learn
+matplotlib
+scikit-image
+flask-cors

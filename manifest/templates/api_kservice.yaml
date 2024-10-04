@@ -1,0 +1,35 @@
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: {{ .Values.api.name }}
+  labels:
+    app: {{ .Values.api.name }}
+    networking.knative.dev/visibility: cluster-local
+spec:
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.api.name }}
+        version: v1
+      annotations:
+        autoscaling.knative.dev/min-scale: "1"
+        autoscaling.knative.dev/class: "kpa.autoscaling.knative.dev"
+    spec:
+      containers:
+        - image: "{{ .Values.api.image }}:{{ .Values.api.tag }}"
+          name: {{ .Values.api.name }}
+          ports:
+            - containerPort: {{ .Values.api.port }}
+          env:
+            - name: MODEL_SERVICE_URL
+              value: "http://model.default.svc.cluster.local"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      imagePullSecrets:
+        - name: {{ .Values.secrets.gitlabCredentials }}
